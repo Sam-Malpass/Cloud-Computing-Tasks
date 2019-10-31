@@ -2,6 +2,7 @@ package courseworkTasks;
 
 import mapReduce.Job;
 import mapReduce.Tuple;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -99,6 +100,7 @@ public class Task3 extends Job {
         }
         return mapperOutput;
     }
+
 
     @Override
     public ArrayList<Tuple> reduce(ArrayList<Tuple> arrayList) {
