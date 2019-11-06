@@ -1,4 +1,4 @@
-package courseworkTasks;
+package courseworkTasks.taskTwo;
 
 import mapReduce.Job;
 import mapReduce.Tuple;
@@ -6,12 +6,14 @@ import mapReduce.Tuple;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 public class Task2 extends Job {
     @Override
-    public ArrayList<Object> preprocess(ArrayList<String> arrayList) {
+    public ArrayList<Object> preprocess(ArrayList<Object> input) {
         ArrayList<Object> dataEntries = new ArrayList<>();
-        for(String line : arrayList) {
+        for(Object y : input) {
+            String line = (String) y;
             ArrayList<Object> data = new ArrayList<>();
             boolean errorFlag = false;
             String error = "";
@@ -73,7 +75,7 @@ public class Task2 extends Job {
                 boolean tmp = true;
                 for(Object o : dataEntries) {
                     ArrayList<Object> obj = (ArrayList) o;
-                    if(data.equals(obj)) {
+                    if(obj.get(1).equals(data.get(1)) && obj.get(0).equals(data.get(0))) {
                         tmp = false;
                     }
                 }
@@ -82,7 +84,7 @@ public class Task2 extends Job {
                 }
             }
             else {
-                System.out.println("[WARNING] Data entry number " + arrayList.indexOf(line) + " has following errors: ");
+                System.out.println("[WARNING] Data entry number " + input.indexOf(line) + " has following errors: ");
                 System.out.print(error);
                 System.out.println("[PREPROCESSOR] Removed erroneous data entry!");
             }
@@ -95,20 +97,14 @@ public class Task2 extends Job {
         ArrayList<Tuple> mapperOutput = new ArrayList<>();
         for(Object o : arrayList) {
             ArrayList<Object> tmp = (ArrayList) o;
-            ArrayList<Object> vals = new ArrayList<>();
-            ArrayList<Object> passengers = new ArrayList<>();
-            passengers.add(tmp.get(0));
-            ArrayList<Object> rest = new ArrayList<>();
-            rest.add(tmp.get(2));
-            rest.add(tmp.get(3));
-            rest.add(tmp.get(4));
-            Date tst = (Date) tmp.get(4);
-            long arrivalMill =  tst.getTime() + (((int) tmp.get(5) * 60) * 1000);
-            rest.add(new Date(arrivalMill));
-            rest.add(tmp.get(5));
-            vals.add(passengers);
-            vals.add(rest);
-            Tuple tuple = new Tuple(tmp.get(1), vals);
+            ArrayList<Object> key = new ArrayList<>();
+            key.add(tmp.get(1));
+            key.add(tmp.get(2));
+            key.add(tmp.get(4));
+            key.add(tmp.get(3));
+            key.add( new Date(((Date)tmp.get(4)).getTime() + (((int)tmp.get(5)) * 60)*1000));
+            key.add(tmp.get(5));
+            Tuple tuple = new Tuple(key, tmp.get(0));
             mapperOutput.add(tuple);
         }
         return mapperOutput;
@@ -116,45 +112,19 @@ public class Task2 extends Job {
 
     @Override
     public ArrayList<Tuple> reduce(ArrayList<Tuple> arrayList) {
-        ArrayList<Tuple> reducerOutput = new ArrayList<>();
-        for(Tuple t : arrayList) {
-            ArrayList<Object> vals = (ArrayList) t.getValue();
-            ArrayList<Object> passengers = new ArrayList<>();
-            ArrayList<Object> details = new ArrayList<>();
-            for(Object x : vals) {
-                ArrayList<Object> z = (ArrayList) x;
-                for (Object o : z) {
-                    ArrayList<Object> tmp = (ArrayList) o;
-                    if (tmp.size() == 1) {
-                        passengers.addAll(tmp);
-                    } else {
-                        details = tmp;
-                    }
-                }
-            }
-            ArrayList<Object> newVals = new ArrayList<>();
-            newVals.add(passengers);
-            newVals.add(details);
-            Tuple tuple = new Tuple(t.getKey(), newVals);
-            reducerOutput.add(tuple);
-        }
-        return reducerOutput;
+        return arrayList;
     }
 
     @Override
     public String format(ArrayList<Tuple> arrayList) {
         String builder = "";
         for(Tuple t : arrayList) {
-            builder += "Flight ID: " + t.getKey() + "\n";
-            ArrayList<Object> vals = (ArrayList) t.getValue();
-            ArrayList<Object> passengers = (ArrayList) vals.get(0);
-            ArrayList<Object> details = (ArrayList) vals.get(1);
-            builder += "Departing from " + details.get(0) + " at " + details.get(2) + "\nArriving at " + details.get(1) + " at " + details.get(3) + "\nTotal Time: " + details.get(4) + " minutes\nPassenger List:\n";
-            for(Object s : passengers) {
-                builder += s + "\n";
+            ArrayList key = (ArrayList) t.getKey();
+            builder += "Flight " + key.get(0) + " departed from " + key.get(1) + " at " + key.get(2) + " and arrived at " + key.get(3) + " at " + key.get(4) + " with a total time of " + key.get(5) + " minutes. Passenger manifest:\n";
+            ArrayList val = (ArrayList) t.getValue();
+            for(Object o : val) {
+                builder += o.toString() + "\n";
             }
-            builder += "Total Passengers: " + passengers.size();
-            builder+="\n\n";
         }
         return builder;
     }

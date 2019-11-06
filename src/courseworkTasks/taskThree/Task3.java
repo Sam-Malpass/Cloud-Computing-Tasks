@@ -1,4 +1,4 @@
-package courseworkTasks;
+package courseworkTasks.taskThree;
 
 import mapReduce.Job;
 import mapReduce.Tuple;
@@ -9,9 +9,10 @@ import java.util.Date;
 
 public class Task3 extends Job {
     @Override
-    public ArrayList<Object> preprocess(ArrayList<String> arrayList) {
+    public ArrayList<Object> preprocess(ArrayList<Object> input) {
         ArrayList<Object> dataEntries = new ArrayList<>();
-        for(String line : arrayList) {
+        for(Object y : input) {
+            String line = (String) y;
             ArrayList<Object> data = new ArrayList<>();
             boolean errorFlag = false;
             String error = "";
@@ -73,7 +74,7 @@ public class Task3 extends Job {
                 boolean tmp = true;
                 for(Object o : dataEntries) {
                     ArrayList<Object> obj = (ArrayList) o;
-                    if(data.get(1).equals(obj.get(1)) && data.get(0).equals(obj.get(0))) {
+                    if(obj.get(1).equals(data.get(1)) && obj.get(0).equals(data.get(0))) {
                         tmp = false;
                     }
                 }
@@ -82,7 +83,7 @@ public class Task3 extends Job {
                 }
             }
             else {
-                System.out.println("[WARNING] Data entry number " + arrayList.indexOf(line) + " has following errors: ");
+                System.out.println("[WARNING] Data entry number " + input.indexOf(line) + " has following errors: ");
                 System.out.print(error);
                 System.out.println("[PREPROCESSOR] Removed erroneous data entry!");
             }
@@ -94,19 +95,19 @@ public class Task3 extends Job {
     public ArrayList<Tuple> map(ArrayList<Object> arrayList) {
         ArrayList<Tuple> mapperOutput = new ArrayList<>();
         for(Object o : arrayList) {
-            ArrayList<Object> tmp = (ArrayList) o;
+            ArrayList tmp = (ArrayList) o;
             Tuple tuple = new Tuple(tmp.get(1), tmp.get(0));
             mapperOutput.add(tuple);
         }
         return mapperOutput;
     }
 
-
     @Override
     public ArrayList<Tuple> reduce(ArrayList<Tuple> arrayList) {
         ArrayList<Tuple> reducerOutput = new ArrayList<>();
         for(Tuple t : arrayList) {
-            reducerOutput.add(new Tuple(t.getKey(), ((ArrayList)t.getValue()).size()));
+            Tuple tuple = new Tuple(t.getKey(), ((ArrayList) t.getValue()).size());
+            reducerOutput.add(tuple);
         }
         return reducerOutput;
     }
@@ -115,7 +116,7 @@ public class Task3 extends Job {
     public String format(ArrayList<Tuple> arrayList) {
         String builder = "";
         for(Tuple t : arrayList) {
-            builder += "Flight " + t.getKey() + " had " + t.getValue() + " passenger(s)\n\n";
+            builder += "Flight " + t.getKey() + " had " + t.getValue() + " passenger(s)\n";
         }
         return builder;
     }

@@ -1,37 +1,56 @@
-package courseworkTasks;
+package courseworkTasks.taskFourChain;
 
 import fileHandler.FileHandler;
 import mapReduce.Job;
 import mapReduce.Tuple;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 
-public class Task1 extends Job {
-    private ArrayList<String> allAirports = new ArrayList<>();
+public class Task4A extends Job {
+    private ArrayList<Tuple> allAirports = new ArrayList<>();
+    private boolean checkLatLong(String lat, String lon) {
+        int integerPlaces = lat.indexOf(".");
+        int decimalPlaces = lat.length() - integerPlaces - 1;
+        if(decimalPlaces >= 3 && decimalPlaces <= 13) {
+             integerPlaces = lon.indexOf(".");
+             decimalPlaces = lon.length() - integerPlaces - 1;
+             if(decimalPlaces >=3 && decimalPlaces <= 13) {
+                 return true;
+             }
+             else {
+                 return false;
+             }
+        }
+        else {
+            return false;
+        }
+    }
     private void getAirports() {
         FileHandler fh = new FileHandler();
-        ArrayList<String> input = fh.read("Data/Top30_airports_LatLong(1).csv");
-        for(String i : input) {
+        ArrayList<Object> input = fh.read("Data/Top30_airports_LatLong.csv");
+        for(Object x : input) {
+            String i = (String) x;
             if(!i.isEmpty()) {
                 String[] row = i.split(",");
                 if(!row[1].isEmpty() && row[1].matches("[A-Z][A-Z][A-Z]")) {
-                    allAirports.add(row[1]);
+                    if(checkLatLong(row[2],row[3])){
+                        ArrayList<Object> loc = new ArrayList<>();
+                        loc.add(Double.parseDouble(row[2]));
+                        loc.add(Double.parseDouble(row[3]));
+                        allAirports.add(new Tuple(row[1], loc));
+                    }
                 }
             }
         }
     }
-    private void postprocess(ArrayList<Tuple> arrayList) {
-        for(Tuple t : arrayList) {
-            allAirports.remove(t.getKey());
-        }
-    }
-
     @Override
-    public ArrayList<Object> preprocess(ArrayList<String> input) {
+    public ArrayList<Object> preprocess(ArrayList<Object> input) {
         getAirports();
         ArrayList<Object> dataEntries = new ArrayList<>();
-        for(String line : input) {
+        for(Object y : input) {
+            String line = (String) y;
             ArrayList<Object> data = new ArrayList<>();
             boolean errorFlag = false;
             String error = "";
@@ -93,7 +112,7 @@ public class Task1 extends Job {
                 boolean tmp = true;
                 for(Object o : dataEntries) {
                     ArrayList<Object> obj = (ArrayList) o;
-                    if(obj.get(1).equals(data.get(1)) && obj.get(2).equals(data.get(2))) {
+                    if(obj.get(1).equals(data.get(1)) && obj.get(0).equals(data.get(0))) {
                         tmp = false;
                     }
                 }
@@ -114,37 +133,49 @@ public class Task1 extends Job {
     public ArrayList<Tuple> map(ArrayList<Object> arrayList) {
         ArrayList<Tuple> mapperOutput = new ArrayList<>();
         for(Object o : arrayList) {
-            ArrayList<Object> tmp = (ArrayList) o;
-            Tuple tmpTuple = new Tuple(tmp.get(2), tmp.get(1));
-            mapperOutput.add(tmpTuple);
+            ArrayList tmp = (ArrayList) o;
+            ArrayList<Object> key = new ArrayList<>();
+            key.add(tmp.get(1));
+            for(Tuple t : allAirports) {
+                ArrayList<Object> tmpCoords;
+                if(t.getKey().equals(tmp.get(2))) {
+                    tmpCoords = (ArrayList) t.getValue();
+                    double startLat = (double) tmpCoords.get(0);
+                    double startLong = (double) tmpCoords.get(1);
+                    for(Tuple t2 : allAirports) {
+                        if(t2.getKey().equals(tmp.get(3))) {
+                            tmpCoords = (ArrayList) t2.getValue();
+                            double finLat = (double) tmpCoords.get(0);
+                            double finLong = (double) tmpCoords.get(1);
+                            double theta = startLong - finLong;
+                            double dist = Math.sin(Math.toRadians(startLat)) * Math.sin(Math.toRadians(finLat)) + Math.cos(Math.toRadians(startLat)) * Math.cos(Math.toRadians(finLat)) * Math.cos(Math.toRadians(theta));
+                            dist = Math.acos(dist);
+                            dist = Math.toDegrees(dist);
+                            dist = dist * 60 * 1.1515;
+                            key.add(dist);
+                            mapperOutput.add(new Tuple(key, tmp.get(0)));
+                        }
+                    }
+                }
+            }
         }
         return mapperOutput;
     }
 
     @Override
     public ArrayList<Tuple> reduce(ArrayList<Tuple> arrayList) {
-        ArrayList<Tuple> reducerOutput = new ArrayList<>();
-        for(Tuple t : arrayList) {
-            ArrayList<Object> vals = (ArrayList) t.getValue();
-            Tuple tmp = new Tuple(t.getKey(), vals.size());
-            reducerOutput.add(tmp);
-        }
-        return reducerOutput;
+        return arrayList;
     }
 
     @Override
     public String format(ArrayList<Tuple> arrayList) {
-        postprocess(arrayList);
         String builder = "";
         for(Tuple t : arrayList) {
-            builder = builder + "Airport ID: " + t.getKey() + "\nNumber of Flights: " + t.getValue() + "\n\n";
+            System.out.println(t.getKey());
+            ArrayList tmp = (ArrayList) t.getKey();
+            builder += "Flight " + tmp.get(0) + " travelled " + tmp.get(1) + " nautical miles\n";
         }
-        builder = builder + "Missing Airports: \n";
-        for(String s : allAirports) {
-            builder = builder + s + "\n";
-        }
+        builder += "\n\n";
         return builder;
     }
-
-
 }
