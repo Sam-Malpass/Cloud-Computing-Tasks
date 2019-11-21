@@ -1,4 +1,4 @@
-package courseworkTasks.experimental;
+package courseworkTasks.experimental.task3;
 
 import courseworkTasks.preprocessFunctions.Preprocessor;
 import mapReduce.Job;
@@ -6,10 +6,8 @@ import mapReduce.Tuple;
 
 import java.util.ArrayList;
 
-public class Task1 extends Job {
-
+public class Task3 extends Job {
     Preprocessor preprocessor = new Preprocessor();
-
     @Override
     public ArrayList<Object> preprocess(ArrayList<Object> arrayList) {
         ArrayList<Object> preprocessed = new ArrayList<>();
@@ -26,7 +24,7 @@ public class Task1 extends Job {
             boolean flag = true;
             for(Object t : unique) {
                 ArrayList<Object> tmp2 = (ArrayList) t;
-                if(tmp2.get(1).equals(tmp.get(1)) && tmp2.get(2).equals(tmp.get(2))) {
+                if(tmp2.get(1).equals(tmp.get(1)) && tmp2.get(0).equals(tmp.get(0))) {
                     flag = false;
                 }
             }
@@ -41,9 +39,9 @@ public class Task1 extends Job {
     public ArrayList<Tuple> map(ArrayList<Object> arrayList) {
         ArrayList<Tuple> mapperOutput = new ArrayList<>();
         for(Object o : arrayList) {
-            ArrayList<Object> tmp = (ArrayList) o;
-            Tuple tmpTuple = new Tuple(tmp.get(2), tmp.get(1));
-            mapperOutput.add(tmpTuple);
+            ArrayList tmp = (ArrayList) o;
+            Tuple tuple = new Tuple(tmp.get(1), tmp.get(0));
+            mapperOutput.add(tuple);
         }
         return mapperOutput;
     }
@@ -52,9 +50,8 @@ public class Task1 extends Job {
     public ArrayList<Tuple> reduce(ArrayList<Tuple> arrayList) {
         ArrayList<Tuple> reducerOutput = new ArrayList<>();
         for(Tuple t : arrayList) {
-            ArrayList<Object> vals = (ArrayList) t.getValue();
-            Tuple tmp = new Tuple(t.getKey(), vals.size());
-            reducerOutput.add(tmp);
+            Tuple tuple = new Tuple(t.getKey(), ((ArrayList) t.getValue()).size());
+            reducerOutput.add(tuple);
         }
         return reducerOutput;
     }
@@ -63,7 +60,7 @@ public class Task1 extends Job {
     public String format(ArrayList<Tuple> arrayList) {
         String builder = "";
         for(Tuple t : arrayList) {
-            builder = builder + "Airport ID: " + t.getKey() + "\nNumber of Flights: " + t.getValue() + "\n\n";
+            builder += "Flight " + t.getKey() + " had " + t.getValue() + " passenger(s)\n";
         }
         return builder;
     }

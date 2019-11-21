@@ -146,7 +146,7 @@ public class Preprocessor {
         else {
             Tuple lowestLev = new Tuple(4, null);
             for(String t : airportCodes) {
-                int tmp = levensthein.getDistance(t, rowList.get(2));
+                int tmp = levensthein.getDistance(t, rowList.get(3));
                 if((int) lowestLev.getKey() > tmp) {
                     lowestLev = new Tuple(tmp, t);
                 }
@@ -186,5 +186,13 @@ public class Preprocessor {
             System.out.println("[WARNING] Data entry " + line.toString() + " has following errors\n" + error);
             return null;
         }
+    }
+
+    public ArrayList<String> getAirportCodes() {
+        return airportCodes;
+    }
+
+    public ArrayList<Tuple> getAirports() {
+        return airports;
     }
 }
