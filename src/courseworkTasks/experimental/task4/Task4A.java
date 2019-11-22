@@ -31,7 +31,6 @@ public class Task4A extends Job {
                 }
             }
             if(flag) {
-                System.out.println(tmp.get(1));
                 unique.add(tmp);
             }
         }
